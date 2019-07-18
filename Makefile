@@ -1,24 +1,50 @@
 CXX=g++
 CXXFLAGS= -O
-LDFLAGS= -lGL -lGLU -lglut
-OFOLDER=obj
-SOURCES=$(wildcard *.cpp)
-OBJECTS=$(patsubst %.cpp,$(OFOLDER)/%.o,$(SOURCES))
-TARGET=run
+
+INCLUDEDIR=include
+COMMONDIR=common
+BINDIR=bin
+ODIR=obj
+
+LDFLAGS=
+INCLUDEFLAGS= -I$(INCLUDEDIR)
+COMMONSRCS=$(wildcard $(COMMONDIR)/*.cpp)
+COMMONOBJS=$(patsubst $(COMMONDIR)/%.cpp,$(ODIR)/%.o,$(COMMONSRCS))
+
+MODULEDIR=src
+MODULES=DisplayModule #PMModule LaserModule
+ENTRYMODULE=DisplayModule
+TARGET=runProject
+
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-	$(CXX) -o $@ $^ $(LDFLAGS) 
+#---------------Common Files Compilation----------------------------
 
-$(OFOLDER)/%.o: %.cpp %.hpp $(OFOLDER)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(TARGET): $(MODULES)
+	ln -s $(BINDIR)/$(ENTRYMODULE) $@
 
-$(OFOLDER)/%.o: %.cpp $(OFOLDER)
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+$(ODIR)/%.o: $(COMMONDIR)/%.cpp $(INCLUDEDIR)/%.h $(ODIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
-$(OFOLDER):
-	mkdir $(OFOLDER)
+$(ODIR)/%.o: $(COMMONDIR)/%.cpp $(ODIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
-clean:
-	rm -f $(OFOLDER)/*.o $(TARGET)
+$(ODIR):
+	mkdir $(ODIR)
+
+clean: $(addsuffix Clean,$(MODULES))
+	rm -f $(ODIR)/*.o $(TARGET) $(BINDIR)/*
+
+#----------------Module Specific Compilation------------------------
+
+DisplayModule: $(COMMONOBJS)
+	cd $(MODULEDIR)/$@; \
+	make all; \
+	cd ../../; \
+	ln $(MODULEDIR)/$@/run $(BINDIR)/$@;
+
+DisplayModuleClean:
+	cd $(MODULEDIR)/DisplayModule; \
+	make clean; \
+	cd ../../;
