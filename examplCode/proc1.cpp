@@ -1,24 +1,28 @@
 //Process 1
-
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "SMStructs.h"
+
+using namespace std;
 
 int main()
 {
-	GPS Novatel;
 	int shmid;
 	key_t key;
-	double* dblPtr;
+	PM* dblPtr;
 	void* shm;
-	key = 1234;
-	if ((shmid = shmget(key, sizeof(GPS), IPC_CREAT | 0666)) < 0)
+    if ((key = ftok("/tmp", 'a')) == (key_t) -1) {
+        printf("IPC error: ftok");
+        return -1;
+    }
+	if ((shmid = shmget(key, sizeof(PM), IPC_CREAT | 0666)) < 0)
 	{
 		printf("Shared memory allocation failed\n");
 		return -1;
@@ -29,14 +33,12 @@ int main()
 		return -1;
 	}
 
-	//Novatel.Lat = 128402.293;
-	//Novatel.Long = 29384.29394103;
-	Novatel.Lat = 9043.25;
-	Novatel.Long = 74443.3445346;
 // Write to SM
-	dblPtr = (double *)shm;
-	*dblPtr = Novatel.Lat;
-	*(dblPtr+1) = Novatel.Long;
+	dblPtr = (PM *)shm;
+    dblPtr->Heartbeats.Status = 0x00;
+	dblPtr->Heartbeats.Flags.PM = 1;
+	dblPtr->Heartbeats.Flags.Laser = 0;
+	dblPtr->Heartbeats.Flags.GPS = 1;
 	while(getchar()!= 'Q');
 	shmdt(shm);
 	return 0;

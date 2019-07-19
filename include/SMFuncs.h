@@ -8,6 +8,8 @@
 #include <iostream>
 #include <stdio.h>
 
+#define TEMP_SHMEM_FILE "/tmp"
+
 void * accuireSHMem(key_t keyId, size_t memSize);
 void * accuireSHMemExl(key_t keyId, size_t memSize);
 

@@ -12,17 +12,17 @@ COMMONSRCS=$(wildcard $(COMMONDIR)/*.cpp)
 COMMONOBJS=$(patsubst $(COMMONDIR)/%.cpp,$(ODIR)/%.o,$(COMMONSRCS))
 
 MODULEDIR=src
-MODULES=DisplayModule #PMModule LaserModule
-ENTRYMODULE=DisplayModule
-TARGET=runProject
+MODULES=PMModule CommandModule LaserModule #DisplayModule
+ENTRYMODULE=PMModule
+TARGET=runProject.out
 
 
-all: $(TARGET)
-
-#---------------Common Files Compilation----------------------------
+all: clean $(TARGET)
 
 $(TARGET): $(MODULES)
 	ln -s $(BINDIR)/$(ENTRYMODULE) $@
+
+#---------------Common Files Compilation----------------------------
 
 $(ODIR)/%.o: $(COMMONDIR)/%.cpp $(INCLUDEDIR)/%.h $(ODIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
@@ -38,11 +38,44 @@ clean: $(addsuffix Clean,$(MODULES))
 
 #----------------Module Specific Compilation------------------------
 
+PMModule: $(COMMONOBJS)
+	cd $(MODULEDIR)/$@; \
+	make all; \
+	cd ../../; \
+	ln $(MODULEDIR)/$@/run.out $(BINDIR)/$@;
+	
+PMModuleClean:
+	cd $(MODULEDIR)/PMModule; \
+	make clean; \
+	cd ../../;
+
+CommandModule: $(COMMONOBJS)
+	cd $(MODULEDIR)/$@; \
+	make all; \
+	cd ../../; \
+	ln $(MODULEDIR)/$@/run.out $(BINDIR)/$@;
+	
+CommandModuleClean:
+	cd $(MODULEDIR)/CommandModule; \
+	make clean; \
+	cd ../../;
+
+LaserModule: $(COMMONOBJS)
+	cd $(MODULEDIR)/$@; \
+	make all; \
+	cd ../../; \
+	ln $(MODULEDIR)/$@/run.out $(BINDIR)/$@;
+	
+LaserModuleClean:
+	cd $(MODULEDIR)/LaserModule; \
+	make clean; \
+	cd ../../;
+
 DisplayModule: $(COMMONOBJS)
 	cd $(MODULEDIR)/$@; \
 	make all; \
 	cd ../../; \
-	ln $(MODULEDIR)/$@/run $(BINDIR)/$@;
+	ln $(MODULEDIR)/$@/run.out $(BINDIR)/$@;
 
 DisplayModuleClean:
 	cd $(MODULEDIR)/DisplayModule; \

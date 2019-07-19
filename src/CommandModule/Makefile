@@ -1,10 +1,10 @@
 CXX=g++
-CXXFLAGS= -O
-LDFLAGS= -lGL -lGLU -lglut
+CXXFLAGS= -Wall -Werror -O
+LDFLAGS=
 INCLUDEFLAGS= -I../../include
-OFOLDER=obj
+ODIR=obj
 SOURCES=$(wildcard *.cpp)
-OBJECTS=$(patsubst %.cpp,$(OFOLDER)/%.o,$(SOURCES))
+OBJECTS=$(patsubst %.cpp,$(ODIR)/%.o,$(SOURCES))
 TARGET=run.out
 
 all: $(TARGET)
@@ -12,14 +12,14 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CXX) -o $@ $^ ../../obj/*.o $(LDFLAGS)
 
-$(OFOLDER)/%.o: %.cpp %.hpp $(OFOLDER)
+$(ODIR)/%.o: %.cpp %.h $(ODIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
-$(OFOLDER)/%.o: %.cpp $(OFOLDER)
+$(ODIR)/%.o: %.cpp $(ODIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
-$(OFOLDER):
-	mkdir $(OFOLDER)
+$(ODIR):
+	mkdir $(ODIR)
 
 clean:
-	rm -f $(OFOLDER)/*.o $(TARGET)
+	rm -f $(ODIR)/*.o $(TARGET)
