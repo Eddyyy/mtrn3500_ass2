@@ -12,7 +12,7 @@ COMMONSRCS=$(wildcard $(COMMONDIR)/*.cpp)
 COMMONOBJS=$(patsubst $(COMMONDIR)/%.cpp,$(ODIR)/%.o,$(COMMONSRCS))
 
 MODULEDIR=src
-MODULES=PMModule CommandModule LaserModule #DisplayModule
+MODULES=PMModule LaserModule #DisplayModule CommandModule
 ENTRYMODULE=PMModule
 TARGET=runProject.out
 

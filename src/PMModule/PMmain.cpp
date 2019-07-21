@@ -12,6 +12,7 @@
 
 #include "SMFuncs.h"
 #include "SMStructs.h"
+#include "ass2Util.h"
 
 using namespace std;
 
@@ -89,10 +90,11 @@ int main()
     // Reset heartbeats and shutdown flags
     sharedPM->Shutdown.Status = 0x00;
     sharedPM->Heartbeats.Status = 0x00;
+    //set_conio_terminal_mode();
     usleep(1000*1000);
 
     //--Main Loop--
-    while (!sharedPM->Shutdown.Flags.PM) {
+    while (!sharedPM->Shutdown.Flags.PM and !kbhit()) {
         usleep(1000*1000);
         std::cout << "Laser Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Laser << std::endl;
         if (sharedPM->Heartbeats.Flags.Laser == PM_RESPONSE) {
@@ -106,9 +108,11 @@ int main()
 
         std::cout << sharedLaser->XRange[0] << " " << sharedLaser->YRange[0] << std::endl;
     }
+    //(void)getch();
 
     std::cout << "Shutting down Flags " << (int)sharedPM->Shutdown.Status << std::endl;
     //--Shutdown Sequence--
+    sharedPM->Shutdown.Status = SHUTDOWN_ALL;
     releaseSHMem(sharedPM);
     releaseSHMem(sharedLaser);
     releaseSHMem(sharedGPS);

@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#define PM_KEY 128+0
-#define GPS_KEY 128+1
-#define LASER_KEY 128+2
+#define PM_KEY 0
+#define GPS_KEY 1
+#define LASER_KEY 2
 
 #define PM_PROBE 0
 #define PM_RESPONSE 1
