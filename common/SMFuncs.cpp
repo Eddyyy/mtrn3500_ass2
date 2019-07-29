@@ -1,6 +1,8 @@
 
 #include "SMFuncs.h"
 
+#define TEMP_SHMEM_FILE "/home/eddy/Documents/uni_files/2019/T2/mtrn3500/mtrn3500_ass2/runProject.out"
+
 using namespace std;
 
 void * accuireSHMem(int memId, size_t memSize) {

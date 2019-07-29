@@ -11,6 +11,7 @@
 #define PM_RESPONSE 1
 
 #define SHUTDOWN_ALL 0xFF
+#define STARTUP_RESET 0
 
 typedef uint8_t flag_t;
 
@@ -21,7 +22,8 @@ struct ModuleFlags {
            Xbox:1,
            Vehicle:1,
            Display:1,
-           Unused:2;
+           Dummy:1,
+           Unused:1;
 };
 
 union ExecFlags {
@@ -30,6 +32,7 @@ union ExecFlags {
 };
 
 typedef struct PM {
+    volatile ExecFlags Started;
     volatile ExecFlags Heartbeats;
     volatile ExecFlags Shutdown;
 } PM;

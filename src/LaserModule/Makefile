@@ -1,7 +1,8 @@
+BOOST_INCLUDE=/usr/include/boost
 CXX=g++
 CXXFLAGS= -Wall -Werror -O
 LDFLAGS=
-INCLUDEFLAGS= -I../../include
+INCLUDEFLAGS= -I../../include -IBOOST_INCLUDE
 ODIR=obj
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(patsubst %.cpp,$(ODIR)/%.o,$(SOURCES))

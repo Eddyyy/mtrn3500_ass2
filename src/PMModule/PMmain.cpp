@@ -17,12 +17,11 @@
 using namespace std;
 
 
-int main()
-{
+int main(int argc, char ** argv) {
     std::string consoleStarter = "xterm -e \'bin/";
     std::vector<std::string> programsToRun = {
-        "LaserModule",
-        "CommandModule"
+        //"DummyModule"
+        "LaserModule"
     };
 
     //--Shared Memory Acquisition--
@@ -51,6 +50,7 @@ int main()
     // Set heartbeats and shutdown flags
     sharedPM->Shutdown.Status = 0x00;
     sharedPM->Heartbeats.Status = 0x00;
+    sharedPM->Started.Status = 0x00;
 
     //new iteration in c++11
     for (std::string program : programsToRun) {
@@ -87,32 +87,48 @@ int main()
         }
     }
 
+    usleep(1000*1000);
     // Reset heartbeats and shutdown flags
+    // Signal main loop start
     sharedPM->Shutdown.Status = 0x00;
     sharedPM->Heartbeats.Status = 0x00;
-    //set_conio_terminal_mode();
-    usleep(1000*1000);
+    sharedPM->Started.Status = 0xFF;
 
     //--Main Loop--
+    std::cout << "PM: Entering Main Loop" << std::endl;
     while (!sharedPM->Shutdown.Flags.PM and !kbhit()) {
         usleep(1000*1000);
-        std::cout << "Laser Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Laser << std::endl;
-        if (sharedPM->Heartbeats.Flags.Laser == PM_RESPONSE) {
-            sharedPM->Heartbeats.Flags.Laser = PM_PROBE;
-            std::cout << "Changed Laser Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Laser << std::endl;
-        } else {
-            //Assuming Laser device is super important
-            sharedPM->Shutdown.Status = SHUTDOWN_ALL;
-            std::cout << "Laser seems dead" << std::endl;
-        }
 
-        std::cout << sharedLaser->XRange[0] << " " << sharedLaser->YRange[0] << std::endl;
+        if (sharedPM->Started.Flags.Dummy == STARTUP_RESET) {
+            //--Check Dummy Heartbeats--
+            std::cout << "Dummy Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Dummy << std::endl;
+            if (sharedPM->Heartbeats.Flags.Dummy == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.Dummy = PM_PROBE;
+                std::cout << "Changed Dummy Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Dummy << std::endl;
+            } else {
+                //Assuming Dummy device is super important
+                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                std::cout << "Dummy seems dead" << std::endl;
+            }
+        }
+        if (sharedPM->Started.Flags.Laser == STARTUP_RESET) {
+            //--Check Laser Heartbeat--
+            std::cout << "Laser Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Laser << std::endl;
+            if (sharedPM->Heartbeats.Flags.Laser == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.Laser = PM_PROBE;
+                std::cout << "Changed Laser Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Laser << std::endl;
+            } else {
+                //Assuming Laser device is super important
+                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                std::cout << "Laser seems dead" << std::endl;
+            }
+            std::cout << sharedLaser->XRange[0] << " " << sharedLaser->YRange[0] << std::endl;
+        }
     }
-    //(void)getch();
 
     std::cout << "Shutting down Flags " << (int)sharedPM->Shutdown.Status << std::endl;
     //--Shutdown Sequence--
-    sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+    //sharedPM->Shutdown.Status = SHUTDOWN_ALL;
     releaseSHMem(sharedPM);
     releaseSHMem(sharedLaser);
     releaseSHMem(sharedGPS);
