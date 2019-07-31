@@ -50,14 +50,9 @@ typedef struct Remote {
     volatile double SetSteering;
 } Remote;
 
-typedef struct Vehicle {
-    volatile double MeasuredSpeed;
-    volatile double MeasuredSteering;
-} Vehicle;
-
 typedef struct Laser {
-    volatile double XRange[600];
-    volatile double YRange[600];
+    volatile double XRange[361];
+    volatile double YRange[361];
 } Laser;
 
 

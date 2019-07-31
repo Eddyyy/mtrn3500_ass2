@@ -38,6 +38,11 @@
 #include "Messages.hpp"
 #include "HUD.hpp"
 
+#include "SMStructs.h"
+#include "SMFuncs.h"
+
+#define MAX_DISPLAY_RETRYS 50
+
 void display();
 void reshape(int width, int height);
 void idle();
@@ -64,9 +69,28 @@ Vehicle * vehicle = NULL;
 double speed = 0;
 double steering = 0;
 
+// shared memory variables
+PM * sharedPM = nullptr;
+Laser * sharedLaser = nullptr;
+
+int retrys = 0;
+
 //int _tmain(int argc, _TCHAR* argv[]) {
 int main(int argc, char ** argv) {
 
+    //--Shared Memory Acquisition--
+    sharedPM = (PM*)accuireSHMem(PM_KEY, sizeof(PM));
+    if (sharedPM == NULL) {
+        std::cerr << "SHmem failed" << std::endl;
+        exit(1);
+    } 
+    sharedLaser = (Laser*)accuireSHMem(LASER_KEY, sizeof(Laser));
+    if (sharedLaser == NULL) {
+        std::cerr << "SHmem failed" << std::endl;
+        releaseSHMem(sharedPM);
+        exit(1);
+    } 
+    
 	const int WINDOW_WIDTH = 800;
 	const int WINDOW_HEIGHT = 600;
 
@@ -100,6 +124,12 @@ int main(int argc, char ** argv) {
 	// -------------------------------------------------------------------------
 	vehicle = new MyVehicle();
 
+    //--Wait for main loop--
+    while (!sharedPM->Started.Flags.Display) {
+        usleep(1000);
+    }
+    usleep(1000);
+    sharedPM->Started.Flags.Display = 0;
 
 	glutMainLoop();
 
@@ -175,6 +205,24 @@ double getTime()
 
 void idle() {
 
+	if (sharedPM->Heartbeats.Flags.Display == PM_PROBE) {
+		sharedPM->Heartbeats.Flags.Display = PM_RESPONSE;
+        retrys = 0;
+	} else {
+		retrys += 1;
+        std::cout << "failed heartbeat" << std::endl;
+        if (retrys >= MAX_DISPLAY_RETRYS) {
+            sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+
+            releaseSHMem(sharedPM);
+            releaseSHMem(sharedLaser);
+
+            std::cout << "Exiting" << std::endl;
+            //exit(0);
+
+        }
+    }
+
 	if (KeyManager::get()->isAsciiKeyPressed('a')) {
 		Camera::get()->strafeLeft();
 	}
@@ -217,8 +265,6 @@ void idle() {
 	if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_DOWN)) {
 		speed = Vehicle::MAX_BACKWARD_SPEED_MPS;
 	}
-
-
 
 
 	const float sleep_time_between_frames_in_seconds = 0.025;

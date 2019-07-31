@@ -20,8 +20,9 @@ using namespace std;
 int main(int argc, char ** argv) {
     std::string consoleStarter = "xterm -e \'bin/";
     std::vector<std::string> programsToRun = {
-        //"DummyModule"
-        "LaserModule"
+        //"DummyModule",
+        "DisplayModule"
+        //"LaserModule"
     };
 
     //--Shared Memory Acquisition--
@@ -69,7 +70,7 @@ int main(int argc, char ** argv) {
 
         case 0: // child process
 
-            std::cout << "in process " << pid << std::endl;
+            std::cout << "Child Process" << std::endl;
             std::cout << "running " << programToRun << std::endl;
 
             //system blocks control from process running it,
@@ -80,7 +81,7 @@ int main(int argc, char ** argv) {
             exit(consoleStatus);
 
         default: // parent process
-            std::cout << "in process " << pid << std::endl;
+            std::cout << "forked process " << pid << std::endl;
             free((void*)programToRun);
 
             break;
@@ -122,7 +123,22 @@ int main(int argc, char ** argv) {
                 sharedPM->Shutdown.Status = SHUTDOWN_ALL;
                 std::cout << "Laser seems dead" << std::endl;
             }
-            std::cout << sharedLaser->XRange[0] << " " << sharedLaser->YRange[0] << std::endl;
+        }
+        if (sharedPM->Started.Flags.Display == STARTUP_RESET) {
+            //--Check Display Heartbeat--
+            std::cout << "Display Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Display << std::endl;
+            if (sharedPM->Heartbeats.Flags.Display == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.Display = PM_PROBE;
+                std::cout << "Changed Display Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Display << std::endl;
+            } else {
+                //Assuming Display device is super important
+                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                std::cout << "Display seems dead" << std::endl;
+            }
+        }
+
+        if (sharedPM->Started.Status == 0xFF) {
+            sharedPM->Shutdown.Status = SHUTDOWN_ALL;
         }
     }
 
