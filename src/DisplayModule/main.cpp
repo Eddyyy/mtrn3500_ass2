@@ -32,6 +32,7 @@
 #include "KeyManager.hpp"
 
 #include "Shape.hpp"
+#include "RectPrism.hpp"
 #include "Vehicle.hpp"
 #include "MyVehicle.hpp"
 
@@ -41,7 +42,10 @@
 #include "SMStructs.h"
 #include "SMFuncs.h"
 
-#define MAX_DISPLAY_RETRYS 50
+#define MAX_DISPLAY_RETRYS 75
+
+#define LASER_POINT_HEIGHT 30
+#define POINT_SIZE 1
 
 void display();
 void reshape(int width, int height);
@@ -72,8 +76,10 @@ double steering = 0;
 // shared memory variables
 PM * sharedPM = nullptr;
 Laser * sharedLaser = nullptr;
+Remote * sharedRemote = nullptr;
 
 int retrys = 0;
+RectPrism * points[NUM_LASER_POINTS];
 
 //int _tmain(int argc, _TCHAR* argv[]) {
 int main(int argc, char ** argv) {
@@ -88,6 +94,13 @@ int main(int argc, char ** argv) {
     if (sharedLaser == NULL) {
         std::cerr << "SHmem failed" << std::endl;
         releaseSHMem(sharedPM);
+        exit(1);
+    } 
+    sharedRemote = (Remote*)accuireSHMem(REMOTE_KEY, sizeof(Remote));
+    if (sharedRemote == NULL) {
+        std::cerr << "SHmem failed" << std::endl;
+        releaseSHMem(sharedPM);
+        releaseSHMem(sharedLaser);
         exit(1);
     } 
     
@@ -123,6 +136,9 @@ int main(int argc, char ** argv) {
 	//   custom vehicle.
 	// -------------------------------------------------------------------------
 	vehicle = new MyVehicle();
+    for (int i = 0; i < NUM_LASER_POINTS; i++) {
+        points[i] = new RectPrism(vehicle->getX(), vehicle->getY(), vehicle->getZ() + LASER_POINT_HEIGHT, POINT_SIZE, POINT_SIZE, POINT_SIZE);
+    }
 
     //--Wait for main loop--
     while (!sharedPM->Started.Flags.Display) {
@@ -132,6 +148,10 @@ int main(int argc, char ** argv) {
     sharedPM->Started.Flags.Display = 0;
 
 	glutMainLoop();
+
+    for (int i = 0; i < NUM_LASER_POINTS; i++) {
+        delete points[i];
+    }
 
 	if (vehicle != NULL) {
 		delete vehicle;
@@ -169,6 +189,10 @@ void display() {
 
 	}
 
+    for (int i = 0; i < NUM_LASER_POINTS; i++) {
+        points[i]->setPosition(vehicle->getX() + sharedLaser->XRange[i], vehicle->getY() + sharedLaser->YRange[i], vehicle->getZ() + LASER_POINT_HEIGHT);
+        points[i]->draw();
+    }
 
 	// draw HUD
 	HUD::Draw();
@@ -216,10 +240,10 @@ void idle() {
 
             releaseSHMem(sharedPM);
             releaseSHMem(sharedLaser);
+            releaseSHMem(sharedRemote);
 
             std::cout << "Exiting" << std::endl;
             //exit(0);
-
         }
     }
 
@@ -247,24 +271,24 @@ void idle() {
 		Camera::get()->strafeUp();
 	}
 
-	speed = 0;
-	steering = 0;
+	speed = sharedRemote->SetSpeed;
+	steering = sharedRemote->SetSteering;
 
-	if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_LEFT)) {
-		steering = Vehicle::MAX_LEFT_STEERING_DEGS * -1;   
-	}
+	//if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_LEFT)) {
+	//	steering = Vehicle::MAX_LEFT_STEERING_DEGS * -1;   
+	//}
 
-	if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_RIGHT)) {
-		steering = Vehicle::MAX_RIGHT_STEERING_DEGS * -1;
-	}
+	//if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_RIGHT)) {
+	//	steering = Vehicle::MAX_RIGHT_STEERING_DEGS * -1;
+	//}
 
-	if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_UP)) {
-		speed = Vehicle::MAX_FORWARD_SPEED_MPS;
-	}
+	//if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_UP)) {
+	//	speed = Vehicle::MAX_FORWARD_SPEED_MPS;
+	//}
 
-	if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_DOWN)) {
-		speed = Vehicle::MAX_BACKWARD_SPEED_MPS;
-	}
+	//if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_DOWN)) {
+	//	speed = Vehicle::MAX_BACKWARD_SPEED_MPS;
+	//}
 
 
 	const float sleep_time_between_frames_in_seconds = 0.025;

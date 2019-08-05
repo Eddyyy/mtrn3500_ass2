@@ -14,15 +14,26 @@
 #include "SMStructs.h"
 #include "ass2Util.h"
 
+#define DUMMY_BINARY "DummyModule"
+#define DISPLAY_BINARY "DisplayModule"
+#define XBOX_BINARY "XboxModule"
+#define VEHICLE_BINARY "VehicleModule"
+#define LASER_BINARY "LaserModule"
+#define GPS_BINARY "GPSModule"
+
+
 using namespace std;
 
 
 int main(int argc, char ** argv) {
     std::string consoleStarter = "xterm -e \'bin/";
     std::vector<std::string> programsToRun = {
-        //"DummyModule",
-        "DisplayModule"
-        //"LaserModule"
+        //DUMMY_BINARY,
+        DISPLAY_BINARY,
+        LASER_BINARY,
+        //GPS_BINARY,
+        VEHICLE_BINARY,
+        XBOX_BINARY,
     };
 
     //--Shared Memory Acquisition--
@@ -47,6 +58,15 @@ int main(int argc, char ** argv) {
         exit(1);
     }
 
+    Remote * sharedRemote = (Remote*)accuireSHMem(REMOTE_KEY, sizeof(Remote));
+    if (sharedRemote == NULL) {
+        std::cerr << "SHmem Remote failed" << std::endl;
+        releaseSHMem(sharedPM);
+        releaseSHMem(sharedLaser);
+        releaseSHMem(sharedGPS);
+        exit(1);
+    }
+
     //--Process Startup--
     // Set heartbeats and shutdown flags
     sharedPM->Shutdown.Status = 0x00;
@@ -55,36 +75,14 @@ int main(int argc, char ** argv) {
 
     //new iteration in c++11
     for (std::string program : programsToRun) {
-        //convert string to char * for exec
-        char * programToRun = (char*)malloc(256);
-        std::strcpy(programToRun, (consoleStarter + program + "\'").c_str());
-
-        // create child process
-        pid_t pid = fork(); 
-		int consoleStatus = 1;
-
-        switch (pid) {
-        case -1: // error
-            perror("fork");
-            exit(1);
-
-        case 0: // child process
-
-            std::cout << "Child Process" << std::endl;
-            std::cout << "running " << programToRun << std::endl;
-
-            //system blocks control from process running it,
-            //so if we run system in a new process (hence fork) we can
-            //run systems for each binary in the project
-            consoleStatus = system(programToRun);
-            free((void*)programToRun);
-            exit(consoleStatus);
-
-        default: // parent process
-            std::cout << "forked process " << pid << std::endl;
-            free((void*)programToRun);
-
-            break;
+        std::string progToRun = consoleStarter + program + "\'";
+        try {
+            forkAndSystem(progToRun);
+        } catch (badForkException& err) {
+            std::cerr << err.what() << std::endl;
+            return EXIT_FAILURE;
+        } catch (childFinishException& err) {
+            return std::stoi(err.what());
         }
     }
 
@@ -98,7 +96,7 @@ int main(int argc, char ** argv) {
     //--Main Loop--
     std::cout << "PM: Entering Main Loop" << std::endl;
     while (!sharedPM->Shutdown.Flags.PM and !kbhit()) {
-        usleep(1000*1000);
+        usleep(2000*1000);
 
         if (sharedPM->Started.Flags.Dummy == STARTUP_RESET) {
             //--Check Dummy Heartbeats--
@@ -110,6 +108,30 @@ int main(int argc, char ** argv) {
                 //Assuming Dummy device is super important
                 sharedPM->Shutdown.Status = SHUTDOWN_ALL;
                 std::cout << "Dummy seems dead" << std::endl;
+            }
+        }
+        if (sharedPM->Started.Flags.Vehicle == STARTUP_RESET) {
+            //--Check Vehicle Heartbeat--
+            std::cout << "Vehicle Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Vehicle << std::endl;
+            if (sharedPM->Heartbeats.Flags.Vehicle == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.Vehicle = PM_PROBE;
+                std::cout << "Changed Vehicle Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Vehicle << std::endl;
+            } else {
+                //Assuming Vehicle device is super important
+                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                std::cout << "Vehicle seems dead" << std::endl;
+            }
+        }
+        if (sharedPM->Started.Flags.Xbox == STARTUP_RESET) {
+            //--Check Xbox Heartbeat--
+            std::cout << "Xbox Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Xbox << std::endl;
+            if (sharedPM->Heartbeats.Flags.Xbox == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.Xbox = PM_PROBE;
+                std::cout << "Changed Xbox Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Xbox << std::endl;
+            } else {
+                //Assuming Xbox device is super important
+                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                std::cout << "Xbox seems dead" << std::endl;
             }
         }
         if (sharedPM->Started.Flags.Laser == STARTUP_RESET) {
@@ -124,6 +146,27 @@ int main(int argc, char ** argv) {
                 std::cout << "Laser seems dead" << std::endl;
             }
         }
+        if (sharedPM->Started.Flags.GPS == STARTUP_RESET) {
+            //--Check GPS Heartbeat--
+            std::cout << "GPS Heartbeat: " << (int)sharedPM->Heartbeats.Flags.GPS << std::endl;
+            if (sharedPM->Heartbeats.Flags.GPS == PM_RESPONSE) {
+                sharedPM->Heartbeats.Flags.GPS = PM_PROBE;
+                std::cout << "Changed GPS Heartbeat: " << (int)sharedPM->Heartbeats.Flags.GPS << std::endl;
+            } else {
+                //Assuming GPS device is not important
+                std::cout << "GPS seems dead" << std::endl;
+                sharedPM->Started.Flags.GPS = 1;
+                std::string progToRun = consoleStarter + GPS_BINARY + "\'";
+                try {
+                    forkAndSystem(progToRun);
+                } catch (badForkException& err) {
+                    std::cerr << err.what() << std::endl;
+                    return EXIT_FAILURE;
+                } catch (childFinishException& err) {
+                    return std::stoi(err.what());
+                }
+            }
+        }
         if (sharedPM->Started.Flags.Display == STARTUP_RESET) {
             //--Check Display Heartbeat--
             std::cout << "Display Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Display << std::endl;
@@ -131,9 +174,18 @@ int main(int argc, char ** argv) {
                 sharedPM->Heartbeats.Flags.Display = PM_PROBE;
                 std::cout << "Changed Display Heartbeat: " << (int)sharedPM->Heartbeats.Flags.Display << std::endl;
             } else {
-                //Assuming Display device is super important
-                sharedPM->Shutdown.Status = SHUTDOWN_ALL;
+                //Assuming Display device is not important
                 std::cout << "Display seems dead" << std::endl;
+                sharedPM->Started.Flags.Display = 1;
+                std::string progToRun = consoleStarter + DISPLAY_BINARY + "\'";
+                try {
+                    forkAndSystem(progToRun);
+                } catch (badForkException& err) {
+                    std::cerr << err.what() << std::endl;
+                    return EXIT_FAILURE;
+                } catch (childFinishException& err) {
+                    return std::stoi(err.what());
+                }
             }
         }
 

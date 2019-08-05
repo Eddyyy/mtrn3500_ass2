@@ -5,7 +5,7 @@
 #include "SMStructs.h"
 #include "ass2Util.h"
 
-#define MAX_DUMMY_RETRYS 20
+#define MAX_DUMMY_RETRYS 40
 
 using namespace std;
 
@@ -29,7 +29,7 @@ int main(int argc, char ** argv) {
     int retrys = 0;
     while (!sharedPM->Shutdown.Flags.Dummy and !kbhit()) {
         usleep(100*1000);
-        //--CHeck Heartbeat--
+        //--Check Heartbeat--
         std::cout << "Dummy: checking heartbeat " << (int)sharedPM->Heartbeats.Flags.Dummy << std::endl;
         if (sharedPM->Heartbeats.Flags.Dummy == PM_PROBE) {
             sharedPM->Heartbeats.Flags.Dummy = PM_RESPONSE;

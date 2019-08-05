@@ -6,12 +6,15 @@
 #define PM_KEY 0
 #define GPS_KEY 1
 #define LASER_KEY 2
+#define REMOTE_KEY 3
 
 #define PM_PROBE 0
 #define PM_RESPONSE 1
 
 #define SHUTDOWN_ALL 0xFF
 #define STARTUP_RESET 0
+
+#define NUM_LASER_POINTS 361
 
 typedef uint8_t flag_t;
 
@@ -41,8 +44,6 @@ typedef struct GPS {
     volatile double Easting;
     volatile double Northing;
     volatile double Height;
-	volatile double Lat;
-	volatile double Long;
 } GPS;
 
 typedef struct Remote {
@@ -51,8 +52,8 @@ typedef struct Remote {
 } Remote;
 
 typedef struct Laser {
-    volatile double XRange[361];
-    volatile double YRange[361];
+    volatile double XRange[NUM_LASER_POINTS];
+    volatile double YRange[NUM_LASER_POINTS];
 } Laser;
 
 

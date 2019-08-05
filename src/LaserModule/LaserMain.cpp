@@ -15,7 +15,7 @@
 
 #define PI 3.14159265
 
-#define MAX_LASER_RETRYS 15
+#define MAX_LASER_RETRYS 30
 
 #define LASER_PORT 23000
 #define LASER_ADDR "192.168.1.200"
@@ -48,7 +48,6 @@ int main(int argc, char ** argv) {
         exit(1);
     } 
 
-    int retrys = 0;
     std::cout << "Laser: Starting up" << std::endl;
 
     //--Socket connection--
@@ -84,6 +83,7 @@ int main(int argc, char ** argv) {
     }
     std::cout << buffer;
     memset(buffer, 0, BUFFER_LEN * sizeof(buffer[0]));
+    int retrys = 0;
 
     //--Wait for main loop--
     while (!sharedPM->Started.Flags.Laser) {
@@ -138,7 +138,7 @@ int main(int argc, char ** argv) {
             usleep(10*1000);
         }
 
-        //--Pasreing Response--
+        //--Parseing Response--
         if (recvStr != "") {
             std::cout << "Parsing data" << std::endl;
             std::vector<std::string> laserScanData;
@@ -155,19 +155,22 @@ int main(int argc, char ** argv) {
                 std::cout << "StartAngle " << startAngle << std::endl;
 
                 for (int pointInd = 0; pointInd <= numPoints; pointInd++) {
-                    float x = (float)(std::stoi(laserScanData[START_DATA_INDEX+pointInd], 0, 16))*sin(pointInd*resolution*PI/180);
-                    float y = (float)(std::stoi(laserScanData[START_DATA_INDEX+pointInd], 0, 16))*cos(pointInd*resolution*PI/180);
+                    float distance = (float)(std::stoi(laserScanData[START_DATA_INDEX+pointInd], 0, 16));
+                    float x = distance*sin(pointInd*resolution*PI/180);
+                    float y = distance*cos(pointInd*resolution*PI/180);
                     std::cout << "X[" << pointInd << "] = " << x << "    ";
                     std::cout << "Y[" << pointInd << "] = " << y << std::endl;
+                    sharedLaser->XRange[pointInd] = x;
+                    sharedLaser->YRange[pointInd] = y;
                 }
             }
         }
 	}
     releaseSHMem(sharedPM);
     releaseSHMem(sharedLaser);
-    char * valIn = 0;
-    std::cout << "Press enter to exit" << std::endl;
-    std::cin >> valIn;
+    //char * valIn = 0;
+    //std::cout << "Press enter to exit" << std::endl;
+    //std::cin >> valIn;
 }
 
 int parseLaserData(std::string recvStr, std::vector<std::string> &parsedString) {

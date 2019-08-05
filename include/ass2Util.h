@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include <sys/select.h>
 
+#include <string>
+#include <cstring>
+#include <iostream>
+
 #include <termios.h>
 #include <fcntl.h>
 
@@ -20,3 +24,14 @@
 
 int kbhit();
 //int getch();
+
+int forkAndSystem(std::string progString);
+
+class badForkException : public std::runtime_error {
+    public:
+        badForkException():runtime_error("Bad Fork"){}
+};
+struct childFinishException : std::runtime_error {
+    public:
+        childFinishException(std::string msg):runtime_error(msg.c_str()){}
+};

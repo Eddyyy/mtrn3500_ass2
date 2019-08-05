@@ -1,5 +1,5 @@
-#define CRC32_POLYNOMIAL			0xEDB88320L
 
+#include "CRCGeneration.h"
 
 
 unsigned long CRC32Value(int i)

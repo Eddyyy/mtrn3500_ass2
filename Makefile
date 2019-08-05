@@ -12,39 +12,37 @@ COMMONSRCS=$(wildcard $(COMMONDIR)/*.cpp)
 COMMONOBJS=$(patsubst $(COMMONDIR)/%.cpp,$(ODIR)/%.o,$(COMMONSRCS))
 
 MODULEDIR=src
-MODULES=PMModule DummyModule LaserModule DisplayModule
+MODULES=PMModule DummyModule LaserModule DisplayModule GPSModule XboxModule VehicleModule
 ENTRYMODULE=PMModule
 TARGET=runProject.out
 
 
-all: clean $(TARGET)
+all: $(TARGET)
 
 $(TARGET): $(MODULES)
-	ln -s $(BINDIR)/$(ENTRYMODULE) $@
+	ln -fs $(BINDIR)/$(ENTRYMODULE) $@
 
 #---------------Common Files Compilation----------------------------
 
-$(ODIR)/%.o: $(COMMONDIR)/%.cpp $(INCLUDEDIR)/%.h $(ODIR)
+$(ODIR)/%.o: $(COMMONDIR)/%.cpp $(INCLUDEDIR)/%.h | $(ODIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
-$(ODIR)/%.o: $(COMMONDIR)/%.cpp $(ODIR)
+$(ODIR)/%.o: $(COMMONDIR)/%.cpp | $(ODIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDEFLAGS) -c -o $@ $<
 
 $(ODIR):
-	mkdir $(ODIR)
+	-mkdir $(ODIR)
 
+.PHONY: clean
 clean: $(addsuffix Clean,$(MODULES))
-	rm -f $(ODIR)/*.o $(TARGET) $(BINDIR)/*
+	rm -rf $(ODIR)/*.o $(TARGET) $(BINDIR)/* $(ODIR)
 
 #----------------Module Specific Compilation------------------------
 
 $(MODULES) : $(COMMONOBJS)
-	cd $(MODULEDIR)/$@; \
-	make all; \
-	cd ../../; \
-	ln $(MODULEDIR)/$@/run.out $(BINDIR)/$@;
+	cd $(MODULEDIR)/$@ && $(MAKE) all
+	ln -f $(MODULEDIR)/$@/run.out $(BINDIR)/$@
 
+.PHONY: $(addsuffix Clean, $(MODULES))
 $(addsuffix Clean, $(MODULES)):
-	cd $(MODULEDIR)/$(subst Clean,,$@); \
-	make clean; \
-	cd ../../;
+	cd $(MODULEDIR)/$(subst Clean,,$@) &&$(MAKE) clean
