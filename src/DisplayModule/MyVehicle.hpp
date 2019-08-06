@@ -4,6 +4,8 @@
 
 #include "Vehicle.hpp"
 
+#include "SMStructs.h"
+
 class MyVehicle : public Vehicle
 {
 public:

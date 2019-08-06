@@ -31,7 +31,7 @@ int main(int argc, char ** argv) {
         //DUMMY_BINARY,
         DISPLAY_BINARY,
         LASER_BINARY,
-        //GPS_BINARY,
+        GPS_BINARY,
         VEHICLE_BINARY,
         XBOX_BINARY,
     };

@@ -94,8 +94,8 @@ int main(int argc, char ** argv) {
             }
         }
 
-        steering = sharedRemote->SetSteering;
-        speed = sharedRemote->SetSpeed;
+        steering = -sharedRemote->SetSteering;
+        speed = -sharedRemote->SetSpeed;
 
         //--Control Message--
         std::string controlMessage = "";

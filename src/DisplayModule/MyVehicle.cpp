@@ -130,6 +130,7 @@ void drawUGV(double steerAngle)
 			gluCylinder(quad, wheel_height*.5, wheel_height*.5, wheel_width, 12, 1);
 		glPopMatrix();
 	glPopMatrix();
+
 }
 
 MyVehicle::MyVehicle()
@@ -142,6 +143,13 @@ void MyVehicle::draw()
 	positionInGL();
 	
 	drawUGV(steering);
+    for (int i=0; i < NUM_LASER_POINTS; i++) {
+        glBegin(GL_LINES);
+            glVertex3d(yPoints[i]/1000, 0.0, xPoints[i]/1000); // origin of the line
+            glVertex3d(yPoints[i]/1000, 1.0, xPoints[i]/1000); // ending point of the line
+        glEnd(); 
+    }
 
 	glPopMatrix();
-}
+}       
+    

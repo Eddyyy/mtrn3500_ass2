@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
             } else if( e.type == SDL_JOYAXISMOTION ) {
                 //Motion on controller 0
                 if( e.jaxis.which == 0 ) {
-                    if( e.jaxis.axis == 0 ) { //X axis motion
+                    if( e.jaxis.axis == 3 ) { //X axis motion
                         xDir = e.jaxis.value;
                     } else if( e.jaxis.axis == 1 ) { //Y axis motion
                         yDir = e.jaxis.value;

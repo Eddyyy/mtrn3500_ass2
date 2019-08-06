@@ -45,7 +45,7 @@
 #define MAX_DISPLAY_RETRYS 75
 
 #define LASER_POINT_HEIGHT 30
-#define POINT_SIZE 1
+#define POINT_SIZE 0.5
 
 void display();
 void reshape(int width, int height);
@@ -136,9 +136,6 @@ int main(int argc, char ** argv) {
 	//   custom vehicle.
 	// -------------------------------------------------------------------------
 	vehicle = new MyVehicle();
-    for (int i = 0; i < NUM_LASER_POINTS; i++) {
-        points[i] = new RectPrism(vehicle->getX(), vehicle->getY(), vehicle->getZ() + LASER_POINT_HEIGHT, POINT_SIZE, POINT_SIZE, POINT_SIZE);
-    }
 
     //--Wait for main loop--
     while (!sharedPM->Started.Flags.Display) {
@@ -148,10 +145,6 @@ int main(int argc, char ** argv) {
     sharedPM->Started.Flags.Display = 0;
 
 	glutMainLoop();
-
-    for (int i = 0; i < NUM_LASER_POINTS; i++) {
-        delete points[i];
-    }
 
 	if (vehicle != NULL) {
 		delete vehicle;
@@ -183,16 +176,11 @@ void display() {
 
 	Ground::draw();
 	
+    vehicle->updateLaser(sharedLaser->XRange, sharedLaser->YRange);
 	// draw my vehicle
 	if (vehicle != NULL) {
 		vehicle->draw();
-
 	}
-
-    for (int i = 0; i < NUM_LASER_POINTS; i++) {
-        points[i]->setPosition(vehicle->getX() + sharedLaser->XRange[i], vehicle->getY() + sharedLaser->YRange[i], vehicle->getZ() + LASER_POINT_HEIGHT);
-        points[i]->draw();
-    }
 
 	// draw HUD
 	HUD::Draw();
@@ -271,7 +259,7 @@ void idle() {
 		Camera::get()->strafeUp();
 	}
 
-	speed = sharedRemote->SetSpeed;
+	speed = -sharedRemote->SetSpeed;
 	steering = sharedRemote->SetSteering;
 
 	//if (KeyManager::get()->isSpecialKeyPressed(GLUT_KEY_LEFT)) {

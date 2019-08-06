@@ -6,6 +6,9 @@
 #include "Shape.hpp"
 #include "VectorMaths.hpp"
 #include <vector>
+#include <cstring>
+
+#include "SMStructs.h"
 
 class Vehicle : public Shape {
 public:
@@ -26,10 +29,14 @@ public:
 
 	double getSpeed() const { return speed; }
 	double getSteering() const { return steering; }
+    void updateLaser(volatile double xUpdate[], volatile double yUpdate[]);
 
 protected:
 	double speed;     // m/s
 	double steering;  // degrees
+
+    double xPoints[NUM_LASER_POINTS];
+    double yPoints[NUM_LASER_POINTS];
 
 };
 

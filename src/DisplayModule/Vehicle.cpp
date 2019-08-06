@@ -40,6 +40,11 @@ void Vehicle::update(double speed_, double steering_, double dt)
 	update(dt);
 }
 
+void Vehicle::updateLaser(volatile double xUpdate[NUM_LASER_POINTS], volatile double yUpdate[NUM_LASER_POINTS]) {
+    std::memcpy(this->xPoints, (const void*)xUpdate, NUM_LASER_POINTS);
+    std::memcpy(this->yPoints, (const void*)yUpdate, NUM_LASER_POINTS);
+}
+
 
 double clamp(double a, double n, double b) {
 

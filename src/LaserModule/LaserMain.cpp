@@ -127,7 +127,7 @@ int main(int argc, char ** argv) {
         }
 
         //--Laser Response--
-        usleep(100*1000);
+        usleep(10*1000);
         std::cout << "Recieveing data" << std::endl;
         std::string recvStr = "";
         int numBytes = 0;
@@ -147,17 +147,17 @@ int main(int argc, char ** argv) {
             } else {
                 //--Found Points--
                 uint16_t numPoints = std::stoi(laserScanData.at(NUMPOINTS_INDEX), 0, 16);
-                float resolution = ((float)std::stoi(laserScanData.at(RESOLUTION_INDEX), 0, 16))/10000;
-                float startAngle = ((float)std::stoi(laserScanData.at(STARTANGLE_INDEX), 0, 16))/10000;
+                double resolution = ((double)std::stoi(laserScanData.at(RESOLUTION_INDEX), 0, 16))/10000.0;
+                double startAngle = ((double)std::stoi(laserScanData.at(STARTANGLE_INDEX), 0, 16))/10000.0;
 
                 std::cout << "NumPoints " << numPoints << std::endl;
                 std::cout << "Resolution " << resolution << std::endl;
                 std::cout << "StartAngle " << startAngle << std::endl;
 
-                for (int pointInd = 0; pointInd <= numPoints; pointInd++) {
-                    float distance = (float)(std::stoi(laserScanData[START_DATA_INDEX+pointInd], 0, 16));
-                    float x = distance*sin(pointInd*resolution*PI/180);
-                    float y = distance*cos(pointInd*resolution*PI/180);
+                for (int pointInd = 0; pointInd < numPoints; pointInd++) {
+                    double distance = (double)(std::stoi(laserScanData[START_DATA_INDEX+pointInd], 0, 16));
+                    double x = distance*sin((double)pointInd*resolution*PI/180.0);
+                    double y = distance*cos((double)pointInd*resolution*PI/180.0);
                     std::cout << "X[" << pointInd << "] = " << x << "    ";
                     std::cout << "Y[" << pointInd << "] = " << y << std::endl;
                     sharedLaser->XRange[pointInd] = x;
@@ -168,9 +168,9 @@ int main(int argc, char ** argv) {
 	}
     releaseSHMem(sharedPM);
     releaseSHMem(sharedLaser);
-    //char * valIn = 0;
-    //std::cout << "Press enter to exit" << std::endl;
-    //std::cin >> valIn;
+    char * valIn = 0;
+    std::cout << "Press enter to exit" << std::endl;
+    std::cin >> valIn;
 }
 
 int parseLaserData(std::string recvStr, std::vector<std::string> &parsedString) {
@@ -184,6 +184,10 @@ int parseLaserData(std::string recvStr, std::vector<std::string> &parsedString) 
     bool message_started = false;
     bool message_ended = false;
     int end_zeros = 0;
+
+    if (result[1] != "LMDscandata") {
+        return -1;
+    }
 
     //--Packet Parsing--
     for (std::string curr : result) {
